@@ -1,0 +1,17 @@
+dj-static==0.0.6
+Django==2.1.4
+django-bootstrap3==9.1.0
+django-cors-headers==3.0.2
+django-environ==0.8.1
+django-filter==2.0.0
+django-graphql-jwt==0.1.5
+graphene==2.1.9
+graphene-django==2.2.0
+graphql-core==2.3.2
+graphql-relay==2.0.1
+joblib==1.1.0
+numpy==1.18.5
+PyJWT==2.3.0
+scikit-image==0.19.1
+scikit-learn==0.24.1
+static3==0.7.0
