@@ -134,3 +134,11 @@ GRAPHENE = {
 BOOTSTRAP3 = {
     'include_jquery':True,
 }
+
+
+BACKEND = {
+    'host': config('BACKEND_HOST', 'localhost'),
+    'port': int(config('BACKEND_PORT', '8787'))
+}
+
+ENV_REF = config('ENV_REF', 'dev')
