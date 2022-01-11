@@ -46,12 +46,18 @@ form.append("map", "{ \"File\": [\"variables.file\"] }");
 form.append("File", file);
 form.append("", "");
 
+var host = "{{host}}";
+var port = "{{port}}";
+var env_ref = "{{env_ref}}"
 
-fetch("https://Hippocrates.brunolcarli.repl.co/graphql/", {
+if (env_ref != 'production'){
+  host = `${host}/graphql/`;
+}
+  fetch(host, {
   "method": "POST",
   'headers': new Headers({
     'Accept': '*/*',
-    'Access-Control-Allow-Origin': "https://Hippocrates.brunolcarli.repl.co/graphql/",
+    'Access-Control-Allow-Origin': host,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, PUT, PATCH, DELETE',
     'Access-Control-Allow-Headers': 'origin,X-Requested-With,content-type,accept,multipart/form-data',
     'Access-Control-Allow-Credentials': 'true' 
