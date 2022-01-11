@@ -30,7 +30,7 @@ O nome do serviço é uma homenagem ao pensador grego de mesmo nome da era de 46
 
 Uma demo está disponível em: `https://hippocrates.brunolcarli.repl.co/`
 
-Uma API Graphql da aplicação é aberta e disponibilizada no endpoint: `https://hippocrates.brunolcarli.repl.co/graphq/`
+Uma API Graphql da aplicação é aberta e disponibilizada no endpoint: `https://hippocrates.brunolcarli.repl.co/graphql/`
 
 </div>
 
