@@ -23,10 +23,10 @@ O serviço utiliza um modelo de machine learning treinado a partir dos dados for
 
 O princípio do trabalho consiste em elaborar um fluxo de processamento de imagems para a base de dados fornecida (68 amostras) e classificar os dados com machine learning.
 
-O nome do serviço é uma homenagem ao pensador grego de mesmo nome da era de 460 - 370 AC, cujo foi considerado um dos pais da medicina e primeiro homem a descrever e registrar o melanoma.
+O nome do serviço é uma homenagem ao pensador grego de mesmo nome da era de 460 - 370 AC, cujo foi o [primeiro homem a descrever e registrar o melanoma](https://www.tandfonline.com/doi/full/10.1080/15384047.2019.1640032#:~:text=melanoma%20treatment%20options.-,History%20of%20melanoma,fatal%20black%20tumors%20spread%20throughout%20the%20bodies%20of%20their%20patients.,-12).
 
 
-
+## Demo da aplicação
 
 Uma demo está disponível em: `https://hippocrates.brunolcarli.repl.co/`
 
