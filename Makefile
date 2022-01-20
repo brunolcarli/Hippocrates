@@ -7,3 +7,6 @@ install:
 replit:
 	make install
 	make run
+
+shell:
+	python3 manage.py shell --settings=hippocrates.settings.${ENV_REF}
