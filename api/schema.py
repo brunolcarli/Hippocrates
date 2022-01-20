@@ -3,10 +3,35 @@ import joblib
 import graphene
 from django.conf import settings
 from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
-import skimage
 from skimage.io import imread
 from skimage.transform import resize
+from django.core.files.base import ContentFile
+
+
+class ScoreType(graphene.ObjectType):
+    """
+    Evaluation metrics.
+    """
+    accuracy = graphene.Float()
+    precision = graphene.Float()
+    sensitivity = graphene.Float()
+    specificity = graphene.Float()
+    f1 = graphene.Float()
+
+
+class ModelType(graphene.ObjectType):
+    """
+    Estimator metadata.
+    """
+    reference = graphene.String()
+    estimator = graphene.String()
+    train_score = graphene.Float()
+    correct_percentage = graphene.Float()
+    test_scores = graphene.Field(ScoreType)
+    set_scores = graphene.Field(ScoreType)
+    test_baseline_accuracy = graphene.Float()
+    set_baseline_accuracy = graphene.Float()
+    sample_split_rate = graphene.String()
 
 
 class PredictionType(graphene.ObjectType):
@@ -27,6 +52,29 @@ class Query(graphene.ObjectType):
 
     def resolve_api_version(self, info, **kwargs):
         return settings.VERSION
+
+    # models
+    models = graphene.List(ModelType)
+
+    def resolve_models(self, info, **kwargs):
+        path = 'api/dumps/'
+        models_available = []
+        for dump in os.listdir(path):
+            data = joblib.load(path+dump)
+            models_available.append(
+                ModelType(
+                    reference=dump,
+                    estimator=str(data['model']._final_estimator),
+                    train_score=data['score'],
+                    correct_percentage=data['correct_percentage'],
+                    test_scores=data.get('test_scores', {}),
+                    set_scores=data.get('set_scores', {}),
+                    test_baseline_accuracy=data.get('test_baseline_accuracy'),
+                    set_baseline_accuracy=data.get('set_baseline_accuracy'),
+                    sample_split_rate=dump.split('_')[0]
+                )
+            )
+        return models_available
 
     # predict
     predict = graphene.Field(
