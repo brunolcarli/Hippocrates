@@ -8,6 +8,14 @@ from skimage.transform import resize
 from django.core.files.base import ContentFile
 
 
+PATH = path = 'api/dumps/'
+
+AvailableModels = graphene.Enum(
+    'ModelData',
+    [('M'+dump.split('.')[0].replace(':', '').upper(), dump) for dump in os.listdir(PATH)]
+)
+
+
 class ScoreType(graphene.ObjectType):
     """
     Evaluation metrics.
@@ -54,13 +62,33 @@ class Query(graphene.ObjectType):
         return settings.VERSION
 
     # models
-    models = graphene.List(ModelType)
+    models = graphene.List(
+        ModelType,
+        reference=AvailableModels()
+    )
 
     def resolve_models(self, info, **kwargs):
-        path = 'api/dumps/'
         models_available = []
-        for dump in os.listdir(path):
-            data = joblib.load(path+dump)
+
+        if kwargs.get('reference'):
+            data = joblib.load(PATH+kwargs['reference'])
+            models_available.append(
+                ModelType(
+                    reference=kwargs['reference'],
+                    estimator=str(data['model']._final_estimator),
+                    train_score=data['score'],
+                    correct_percentage=data['correct_percentage'],
+                    test_scores=data.get('test_scores', {}),
+                    set_scores=data.get('set_scores', {}),
+                    test_baseline_accuracy=data.get('test_baseline_accuracy'),
+                    set_baseline_accuracy=data.get('set_baseline_accuracy'),
+                    sample_split_rate=kwargs['reference'].split('_')[0]
+                )
+            )
+            return models_available
+
+        for dump in os.listdir(PATH):
+            data = joblib.load(PATH+dump)
             models_available.append(
                 ModelType(
                     reference=dump,
@@ -79,14 +107,13 @@ class Query(graphene.ObjectType):
     # predict
     predict = graphene.Field(
         PredictionType,
+        estimator=AvailableModels(default_value=AvailableModels.M40X28_V1.value),
         description='Predicts a melanoma class for a image file.'
     )
 
     def resolve_predict(self, info, **kwargs):
         files = info.context.FILES
         image = files.get('File')
-        # The estimator may be chosen by parameter in the future
-        estimator = 'SGDClassifier(random_state=2154)_v_1.model'
 
         if not image:
             raise Exception('ERROR: No file received. Aborting.')
@@ -96,8 +123,10 @@ class Query(graphene.ObjectType):
         img = resize(img, (80, 80))
 
         # load model and predict value
-        classifier = joblib.load(f'api/dumped_estimators/{estimator}')
-        prediction = classifier.predict([img])
+        model_path = kwargs['estimator']
+        model_data = joblib.load(f'{PATH}{model_path}')
+        estimator = model_data['model']
+        prediction = estimator.predict([img])
 
         # delete created file
         garbage = open(path)
