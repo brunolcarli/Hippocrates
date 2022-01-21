@@ -22,23 +22,88 @@
     <script src="js/npm.js"></script>
     
     <script type="text/javascript">
-        
-function request_data(){
+
+function status(response) {
+      if (response.status >= 200 && response.status < 300) {
+        return Promise.resolve(response)
+      } else {
+        return Promise.reject(new Error(response.statusText))
+      }
+    };
+
+    function json(response) {
+      return response.json()
+    };
+
+    function get_available_models() {
+      var host = "{{host}}";
+      var port = "{{port}}";
+      var env_ref = "{{env_ref}}"
+
+      if (env_ref != 'production'){
+        host = `${host}/graphql/`;
+      }
+      fetch(host, {
+          "method": "POST",
+          "headers": {
+            "cookie": "csrftoken=ctJzx1RBM4kTPkPWGpZsBIf3EUY8gr0Td2C4OCeWCsslpyXLYCLpjQGYRlxSfFZP",
+            "Content-Type": "application/json"
+          },
+          "body": "{\"query\":\"query{\\n  models(reference: M40X28_V1){\\n    reference\\n    estimator\\n    trainScore\\n    correctPercentage\\n    testScores{\\n      accuracy\\n      precision\\n      sensitivity\\n      specificity\\n      f1\\n    }\\n    setScores{\\n      accuracy\\n      precision\\n      sensitivity\\n      specificity\\n      f1\\n    }\\n    testBaselineAccuracy\\n    setBaselineAccuracy\\n    sampleSplitRate\\n  }\\n}\"}"
+        })
+        .then(json)
+        .then(function (data) {
+          // Se der bom
+          console.log(data);
+          var response = data['data']['models'][0];
+
+          document.getElementById("ModelPanel").innerHTML = `
+          <table id="ModelPanel">
+            <tr>
+              <td><b>Estimator:</b> <small><small>${response["estimator"]}</small></small></td>
+              <td><b>Split rate:</b> <small>${response["sampleSplitRate"]}</small></td>
+            </tr>
+            <tr>
+              <td><b>Train Score:</b> <small>${response["trainScore"]}</small></td>
+              <td><b>Correct %:</b> <small>${response["correctPercentage"]}%</small></td>
+            </tr>
+            <tr>
+              <td><b>Test Baseline Accuracy:</b> <small>${response["testBaselineAccuracy"].toFixed(2)}</small></td>
+              <td><b>Set Baseline Accuracy:</b> <small>${response["setBaselineAccuracy"].toFixed(2)}</small></td>
+            </tr>
+            <tr>
+              <td><b>Test Accuracy:</b> <small>${response["testScores"]["accuracy"].toFixed(2)}</small></td>
+              <td><b>Set Accuracy:</b> <small>${response["setScores"]["accuracy"].toFixed(2)}</small></td>
+            </tr>
+            <tr>
+              <td><b>Test Precision:</b> <small>${response["testScores"]["precision"].toFixed(2)}</small></td>
+              <td><b>Set Precision:</b> <small>${response["setScores"]["precision"].toFixed(2)}</small></td>
+            </tr>
+            <tr>
+              <td><b>Test Sensitivity:</b> <small>${response["testScores"]["sensitivity"].toFixed(2)}</small></td>
+              <td><b>Set Sensitivity:</b> <small>${response["setScores"]["sensitivity"].toFixed(2)}</small></td>
+            </tr>
+            <tr>
+              <td><b>Test Specificity:</b> <small>${response["testScores"]["specificity"].toFixed(2)}</small></td>
+              <td><b>Set Specificity:</b> <small>${response["setScores"]["specificity"].toFixed(2)}</small></td>
+            </tr>
+            <tr>
+              <td><b>Test F1:</b> <small>${response["testScores"]["f1"].toFixed(2)}</small></td>
+              <td><b>Set F1:</b> <small>${response["setScores"]["f1"].toFixed(2)}</small></td>
+            </tr>
+          </table>
+          `;
+        })
+        .catch(err => {
+          console.error(err);
+        });
+      };
+
+function request_predict(){
 
 var file = document.getElementById('myFile').files[0]
 console.log(file)
 
-function status(response) {
-  if (response.status >= 200 && response.status < 300) {
-    return Promise.resolve(response)
-  } else {
-    return Promise.reject(new Error(response.statusText))
-  }
-};
-
-function json(response) {
-  return response.json()
-};
 
 var form = new FormData();
 form.append("query", "query{\n  predict {prediction}\n}");
@@ -90,7 +155,7 @@ if (env_ref != 'production'){
 	{% bootstrap_javascript %}
     
 </head>
-<body onload="load()">   
+<body onload="get_available_models()">   
     <div class="container">
         <div class="jumbotron">
             <h1 align="center">Melanoma Classifier</h1>
@@ -104,10 +169,17 @@ if (env_ref != 'production'){
                 <div align="center">
                     <div class="well" align="center">
                         <input type="file" id="myFile" name="filename">
-                        
                     </div>
+
+                    <!-- Painel -->
+                    <div class="well">
+                      <h4>Model estimator information</h4>
+                      <table id="ModelPanel">
+                      </table>
+                    </div>
+
                     <div align="center">
-                        <a href="#" class="btn btn-success btn-lg" onclick="request_data()">
+                        <a href="#" class="btn btn-success btn-lg" onclick="request_predict()">
                     <span class="glyphicon glyphicon-refresh"></span>Predict</a>
                 </div>
             </form>
