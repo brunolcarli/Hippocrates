@@ -23,6 +23,10 @@
     
     <script type="text/javascript">
 
+      function foo(value){
+        console.log(value);
+      };
+
 function status(response) {
       if (response.status >= 200 && response.status < 300) {
         return Promise.resolve(response)
@@ -137,16 +141,16 @@ if (env_ref != 'production'){
   var response = data['data']['predict']['prediction'];
   var pic_path = null
 
-  document.getElementById("saida").innerHTML = '<div id="saida">';
-  document.getElementById("saida").innerHTML += `<h3> ${response.charAt(0).toUpperCase()+response.slice(1)} </h3>`;
-  document.getElementById("saida").innerHTML += '</div>';
+  document.getElementById("result").innerHTML = '<div class="result_location" id="result">';
+  document.getElementById("result").innerHTML += `<h3> ${response.charAt(0).toUpperCase()+response.slice(1)} </h3>`;
+  document.getElementById("result").innerHTML += '</div>';
 })
 .catch(err => {
   console.error(err);
   alert(err)
-  document.getElementById("saida").innerHTML = '<div id="saida">';
-  document.getElementById("saida").innerHTML += '<h3>Please select a picture</h3>';
-  document.getElementById("saida").innerHTML += '</div>';
+  document.getElementById("result").innerHTML = '<div class="result_location" id="result">';
+  document.getElementById("result").innerHTML += '<h3>Please select a picture</h3>';
+  document.getElementById("result").innerHTML += '</div>';
 });
 };
     </script>
@@ -154,6 +158,26 @@ if (env_ref != 'production'){
   {% bootstrap_css %}
 	{% bootstrap_javascript %}
     
+
+<style>
+.btn_location { grid-area: main; }
+.result_location { grid-area: right; }
+
+.grid-container {
+  display: grid;
+  grid-template-areas:
+    'main right';
+  grid-gap: 10px;
+  padding: 10px;
+}
+
+.grid-container > div {
+  text-align: center;
+  padding: 20px 0;
+  font-size: 30px;
+}
+</style>
+
 </head>
 <body onload="get_available_models()">   
     <div class="container">
@@ -174,14 +198,25 @@ if (env_ref != 'production'){
                     <!-- Painel -->
                     <div class="well">
                       <h4>Model estimator information</h4>
-                      <table id="ModelPanel">
-                      </table>
-                    </div>
+                      <table id="ModelPanel"></table>
 
-                    <div align="center">
-                        <a href="#" class="btn btn-success btn-lg" onclick="request_predict()">
-                    <span class="glyphicon glyphicon-refresh"></span>Predict</a>
+                      <hr />
+                      <label for="model_selection">Choose another model:</label>
+                      <select name="model_selection" id="model_selection" onchange="foo(this.value)">
+                        <option value="M40X28_V1">40X28</option>
+                        <option value="foo">baz</option>
+                      </select>
+                    </div>
+                    <hr />
+                    <div class="grid-container">
+                    
+                    <div class="btn_location">
+                      <a href="#" class="btn btn-success btn-lg" onclick="request_predict()">
+                      <span class="glyphicon glyphicon-refresh"></span>Predict</a>
+                    </div>  
+                    <div class="result_location" id="result">Result</div>
                 </div>
+                
             </form>
         </div>
         <hr />
