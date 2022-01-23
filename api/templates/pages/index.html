@@ -1,7 +1,14 @@
 
 {% load bootstrap3 %}
 {% load static %}
+<!-- 
+  Aplicação "ilustrativa" para trabalho apresentado na disciplina de visão
+  computacional do curso de Especialização em Inteligência Artificial Aplicada
+  da Universidade Federal do Paraná - UFPR turma 2021
 
+  Autor: Bruno Luvizotto Carli
+  @beelzebruno
+ -->
 <!DOCTYPE HTML>
 <html>
 <head>
@@ -22,9 +29,45 @@
     <script src="js/npm.js"></script>
     
     <script type="text/javascript">
+      // inicio da sujeira lmao
 
-      function foo(value){
-        console.log(value);
+      function get_available_models(){
+        var host = "{{host}}";
+        var port = "{{port}}";
+        var env_ref = "{{env_ref}}"
+
+        if (env_ref != 'production'){
+          host = `${host}/graphql/`;
+        }
+        fetch(host, {
+          "method": "POST",
+          "headers": {
+            "cookie": "csrftoken=ctJzx1RBM4kTPkPWGpZsBIf3EUY8gr0Td2C4OCeWCsslpyXLYCLpjQGYRlxSfFZP",
+            "Content-Type": "application/json"
+          },
+          "body": `{\"query\":\"query{\\n  models{\\n    reference\\n    estimator\\n    trainScore\\n    correctPercentage\\n    testScores{\\n      accuracy\\n      precision\\n      sensitivity\\n      specificity\\n      f1\\n    }\\n    setScores{\\n      accuracy\\n      precision\\n      sensitivity\\n      specificity\\n      f1\\n    }\\n    testBaselineAccuracy\\n    setBaselineAccuracy\\n    sampleSplitRate\\n  }\\n}\"}`
+        })
+        .then(json)
+        .then(function (data) {
+          // Se der bom
+          var response = data['data']['models'];
+          document.getElementById("model_selection").innerHTML = '<select name="model_selection" id="model_selection" onchange="update_model_panel(this.value)">';
+
+          for (const i in response){
+            if (response[i]['reference'] == 'M40X28_V1') {
+              document.getElementById("model_selection").innerHTML += `<option value="${response[i]['reference']}" selected>${response[i]['sampleSplitRate']}</option>`;
+              set_model_panel_values(response[i]);
+            }
+            else {
+              document.getElementById("model_selection").innerHTML += `<option value="${response[i]['reference']}">${response[i]['sampleSplitRate']}</option>`;
+            }
+            
+          }
+          document.getElementById("model_selection").innerHTML += "</select>";
+        })
+        .catch(err => {
+          console.error(err);
+        });
       };
 
 function status(response) {
@@ -39,7 +82,7 @@ function status(response) {
       return response.json()
     };
 
-    function get_available_models() {
+    function update_model_panel(value) {
       var host = "{{host}}";
       var port = "{{port}}";
       var env_ref = "{{env_ref}}"
@@ -53,106 +96,120 @@ function status(response) {
             "cookie": "csrftoken=ctJzx1RBM4kTPkPWGpZsBIf3EUY8gr0Td2C4OCeWCsslpyXLYCLpjQGYRlxSfFZP",
             "Content-Type": "application/json"
           },
-          "body": "{\"query\":\"query{\\n  models(reference: M40X28_V1){\\n    reference\\n    estimator\\n    trainScore\\n    correctPercentage\\n    testScores{\\n      accuracy\\n      precision\\n      sensitivity\\n      specificity\\n      f1\\n    }\\n    setScores{\\n      accuracy\\n      precision\\n      sensitivity\\n      specificity\\n      f1\\n    }\\n    testBaselineAccuracy\\n    setBaselineAccuracy\\n    sampleSplitRate\\n  }\\n}\"}"
+          "body": `{\"query\":\"query{\\n  models(reference: ${value}){\\n    reference\\n    estimator\\n    trainScore\\n    correctPercentage\\n    testScores{\\n      accuracy\\n      precision\\n      sensitivity\\n      specificity\\n      f1\\n    }\\n    setScores{\\n      accuracy\\n      precision\\n      sensitivity\\n      specificity\\n      f1\\n    }\\n    testBaselineAccuracy\\n    setBaselineAccuracy\\n    sampleSplitRate\\n  }\\n}\"}`
         })
         .then(json)
         .then(function (data) {
           // Se der bom
-          console.log(data);
           var response = data['data']['models'][0];
-
-          document.getElementById("ModelPanel").innerHTML = `
-          <table id="ModelPanel">
-            <tr>
-              <td><b>Estimator:</b> <small><small>${response["estimator"]}</small></small></td>
-              <td><b>Split rate:</b> <small>${response["sampleSplitRate"]}</small></td>
-            </tr>
-            <tr>
-              <td><b>Train Score:</b> <small>${response["trainScore"]}</small></td>
-              <td><b>Correct %:</b> <small>${response["correctPercentage"]}%</small></td>
-            </tr>
-            <tr>
-              <td><b>Test Baseline Accuracy:</b> <small>${response["testBaselineAccuracy"].toFixed(2)}</small></td>
-              <td><b>Set Baseline Accuracy:</b> <small>${response["setBaselineAccuracy"].toFixed(2)}</small></td>
-            </tr>
-            <tr>
-              <td><b>Test Accuracy:</b> <small>${response["testScores"]["accuracy"].toFixed(2)}</small></td>
-              <td><b>Set Accuracy:</b> <small>${response["setScores"]["accuracy"].toFixed(2)}</small></td>
-            </tr>
-            <tr>
-              <td><b>Test Precision:</b> <small>${response["testScores"]["precision"].toFixed(2)}</small></td>
-              <td><b>Set Precision:</b> <small>${response["setScores"]["precision"].toFixed(2)}</small></td>
-            </tr>
-            <tr>
-              <td><b>Test Sensitivity:</b> <small>${response["testScores"]["sensitivity"].toFixed(2)}</small></td>
-              <td><b>Set Sensitivity:</b> <small>${response["setScores"]["sensitivity"].toFixed(2)}</small></td>
-            </tr>
-            <tr>
-              <td><b>Test Specificity:</b> <small>${response["testScores"]["specificity"].toFixed(2)}</small></td>
-              <td><b>Set Specificity:</b> <small>${response["setScores"]["specificity"].toFixed(2)}</small></td>
-            </tr>
-            <tr>
-              <td><b>Test F1:</b> <small>${response["testScores"]["f1"].toFixed(2)}</small></td>
-              <td><b>Set F1:</b> <small>${response["setScores"]["f1"].toFixed(2)}</small></td>
-            </tr>
-          </table>
-          `;
+          set_model_panel_values(response);
         })
         .catch(err => {
           console.error(err);
         });
       };
 
-function request_predict(){
+    function request_predict(){
 
-var file = document.getElementById('myFile').files[0]
-console.log(file)
+      var file = document.getElementById('myFile').files[0]
+      console.log(file)
+
+      var selection = document.getElementById('model_selection');
+      var estimator = selection.value;
+      var form = new FormData();
+      form.append("query", `query{\n  predict(estimator: ${estimator}) {prediction}\n}`);
+      form.append("map", "{ \"File\": [\"variables.file\"] }");
+      form.append("File", file);
+      form.append("", "");
+
+      var host = "{{host}}";
+      var port = "{{port}}";
+      var env_ref = "{{env_ref}}"
+
+      if (env_ref != 'production'){
+        host = `${host}/graphql/`;
+      }
+        fetch(host, {
+        "method": "POST",
+        'headers': new Headers({
+          'Accept': '*/*',
+          'Access-Control-Allow-Origin': host,
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, PUT, PATCH, DELETE',
+          'Access-Control-Allow-Headers': 'origin,X-Requested-With,content-type,accept,multipart/form-data',
+          'Access-Control-Allow-Credentials': 'true' 
+
+        }),
+        "body": form
+      })
+      .then(json)
+      .then(function (data) {
+        console.log(data);
+        // Se der bom
+        var response = data['data']['predict']['prediction'];
+        var pic_path = null
+
+        document.getElementById("result").innerHTML = '<div class="result_location" id="result">';
+        document.getElementById("result").innerHTML += `<h3> ${response.charAt(0).toUpperCase()+response.slice(1)} </h3>`;
+        document.getElementById("result").innerHTML += '</div>';
+      })
+      .catch(err => {
+        console.error(err);
+        alert(err)
+        document.getElementById("result").innerHTML = '<div class="result_location" id="result">';
+        document.getElementById("result").innerHTML += '<h3>Please select a picture</h3>';
+        document.getElementById("result").innerHTML += '</div>';
+      });
+    };
 
 
-var form = new FormData();
-form.append("query", "query{\n  predict {prediction}\n}");
-form.append("map", "{ \"File\": [\"variables.file\"] }");
-form.append("File", file);
-form.append("", "");
+    function set_model_panel_values(data){
+      document.getElementById("ModelPanel").innerHTML = `
+          <table id="ModelPanel">
+            <tr>
+              <td><b>Estimator:</b> <small><small>${data["estimator"]}</small></small></td>
+              <td><b>Split rate:</b> <small>${data["sampleSplitRate"]}</small></td>
+            </tr>
+            <tr>
+              <td><b>Train Score:</b> <small>${data["trainScore"]}</small></td>
+              <td><b>Correct %:</b> <small>${data["correctPercentage"]}%</small></td>
+            </tr>
+            <tr>
+              <td><b>Test Baseline Accuracy:</b> <small>${data["testBaselineAccuracy"].toFixed(2)}</small></td>
+              <td><b>Set Baseline Accuracy:</b> <small>${data["setBaselineAccuracy"].toFixed(2)}</small></td>
+            </tr>
+            <tr>
+              <td><b>Test Accuracy:</b> <small>${data["testScores"]["accuracy"].toFixed(2)}</small></td>
+              <td><b>Set Accuracy:</b> <small>${data["setScores"]["accuracy"].toFixed(2)}</small></td>
+            </tr>
+            <tr>
+              <td><b>Test Precision:</b> <small>${data["testScores"]["precision"].toFixed(2)}</small></td>
+              <td><b>Set Precision:</b> <small>${data["setScores"]["precision"].toFixed(2)}</small></td>
+            </tr>
+            <tr>
+              <td><b>Test Sensitivity:</b> <small>${data["testScores"]["sensitivity"].toFixed(2)}</small></td>
+              <td><b>Set Sensitivity:</b> <small>${data["setScores"]["sensitivity"].toFixed(2)}</small></td>
+            </tr>
+            <tr>
+              <td><b>Test Specificity:</b> <small>${data["testScores"]["specificity"].toFixed(2)}</small></td>
+              <td><b>Set Specificity:</b> <small>${data["setScores"]["specificity"].toFixed(2)}</small></td>
+            </tr>
+            <tr>
+              <td><b>Test F1:</b> <small>${data["testScores"]["f1"].toFixed(2)}</small></td>
+              <td><b>Set F1:</b> <small>${data["setScores"]["f1"].toFixed(2)}</small></td>
+            </tr>
+          </table>
+          `;
+      }
 
-var host = "{{host}}";
-var port = "{{port}}";
-var env_ref = "{{env_ref}}"
+      function about(){
+        var text = "This is a illustrative project made for a Computer Vision class";
+        text+= "\nat UFPR university (Brazil).";
+        text += "\nThis should not be used as medical purposes.";
+        text += "Author: Bruno L. Carli\n@beelzebruno";
 
-if (env_ref != 'production'){
-  host = `${host}/graphql/`;
-}
-  fetch(host, {
-  "method": "POST",
-  'headers': new Headers({
-    'Accept': '*/*',
-    'Access-Control-Allow-Origin': host,
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, PUT, PATCH, DELETE',
-    'Access-Control-Allow-Headers': 'origin,X-Requested-With,content-type,accept,multipart/form-data',
-    'Access-Control-Allow-Credentials': 'true' 
+        alert(text);
+      }
 
-  }),
-  "body": form
-})
-.then(json)
-.then(function (data) {
-  console.log(data);
-  // Se der bom
-  var response = data['data']['predict']['prediction'];
-  var pic_path = null
-
-  document.getElementById("result").innerHTML = '<div class="result_location" id="result">';
-  document.getElementById("result").innerHTML += `<h3> ${response.charAt(0).toUpperCase()+response.slice(1)} </h3>`;
-  document.getElementById("result").innerHTML += '</div>';
-})
-.catch(err => {
-  console.error(err);
-  alert(err)
-  document.getElementById("result").innerHTML = '<div class="result_location" id="result">';
-  document.getElementById("result").innerHTML += '<h3>Please select a picture</h3>';
-  document.getElementById("result").innerHTML += '</div>';
-});
-};
     </script>
 
   {% bootstrap_css %}
@@ -202,7 +259,7 @@ if (env_ref != 'production'){
 
                       <hr />
                       <label for="model_selection">Choose another model:</label>
-                      <select name="model_selection" id="model_selection" onchange="foo(this.value)">
+                      <select name="model_selection" id="model_selection" onchange="update_model_panel(this.value)">
                         <option value="M40X28_V1">40X28</option>
                         <option value="foo">baz</option>
                       </select>
@@ -221,8 +278,16 @@ if (env_ref != 'production'){
         </div>
         <hr />
         <div class="well" align="center" id="saida">
-            <label><img src="data:image/jpeg;base64,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" width="128" height="100"> </label>
+            <label><img src="https://writingandbreathing.files.wordpress.com/2020/08/hippocrates_2-1.jpg" width="200" height="150"> </label>
+            <br />
+            <small>This project is maintained by: @beelzebruno (2022)</small>
         </div>
     </div>
 </body>
+<footer>
+    <a href="#" onclick="about()">About</a>
+    ||
+    <a href="https://github.com/brunolcarli/Hippocrates">Source</a>
+</footer>
 </html>
+

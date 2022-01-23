@@ -41,6 +41,9 @@ class ModelType(graphene.ObjectType):
     set_baseline_accuracy = graphene.Float()
     sample_split_rate = graphene.String()
 
+    def resolve_reference(self, info, **kwargs):
+        return 'M' + self.reference.split('.')[0].replace(':', '').upper()
+
 
 class PredictionType(graphene.ObjectType):
     """
@@ -107,7 +110,9 @@ class Query(graphene.ObjectType):
     # predict
     predict = graphene.Field(
         PredictionType,
-        estimator=AvailableModels(default_value=AvailableModels.M40X28_V1.value),
+        estimator=AvailableModels(
+            default_value=AvailableModels.M40X28_V1.value
+        ),
         description='Predicts a melanoma class for a image file.'
     )
 
